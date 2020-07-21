@@ -52,7 +52,7 @@ steps:
     tag: ${{RJM_VERSION}}
 
   free_disk_space:
-    description: Dree up disk space
+    description: Free up disk space
     image: alpine:latest
     working_directory: ${{main_clone}}
     commands:
