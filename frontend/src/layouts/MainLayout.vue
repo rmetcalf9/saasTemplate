@@ -14,8 +14,13 @@
         <q-toolbar-title>
           Quasar App
         </q-toolbar-title>
-
-        <div>Quasar v{{ $q.version }}</div>
+        <div v-if="serverInfoVersionMatchesCodeBaseVersion">Version {{ serverInfoVersion }}</div>
+        <div v-if="!serverInfoVersionMatchesCodeBaseVersion">Version {{ serverInfoVersion }}
+        <q-tooltip>
+          <table><tr><td>Services: {{serverInfoVersion}}</td></tr>
+          <tr><td>Code: {{ codebasever }}</td></tr></table>
+        </q-tooltip>
+        </div>
       </q-toolbar>
     </q-header>
 
@@ -47,6 +52,9 @@
 </template>
 
 <script>
+import rjmversion from '../rjmversion'
+import saasApiClient from '../saasApiClient.js'
+
 import EssentialLink from 'components/EssentialLink.vue'
 
 const linksData = [
@@ -55,42 +63,6 @@ const linksData = [
     caption: 'quasar.dev',
     icon: 'school',
     link: 'https://quasar.dev'
-  },
-  {
-    title: 'Github',
-    caption: 'github.com/quasarframework',
-    icon: 'code',
-    link: 'https://github.com/quasarframework'
-  },
-  {
-    title: 'Discord Chat Channel',
-    caption: 'chat.quasar.dev',
-    icon: 'chat',
-    link: 'https://chat.quasar.dev'
-  },
-  {
-    title: 'Forum',
-    caption: 'forum.quasar.dev',
-    icon: 'record_voice_over',
-    link: 'https://forum.quasar.dev'
-  },
-  {
-    title: 'Twitter',
-    caption: '@quasarframework',
-    icon: 'rss_feed',
-    link: 'https://twitter.quasar.dev'
-  },
-  {
-    title: 'Facebook',
-    caption: '@QuasarFramework',
-    icon: 'public',
-    link: 'https://facebook.quasar.dev'
-  },
-  {
-    title: 'Quasar Awesome',
-    caption: 'Community Quasar projects',
-    icon: 'favorite',
-    link: 'https://awesome.quasar.dev'
   }
 ]
 
@@ -100,7 +72,37 @@ export default {
   data () {
     return {
       leftDrawerOpen: false,
+      codebasever: rjmversion.codebasever,
       essentialLinks: linksData
+    }
+  },
+  computed: {
+    serverInfoVersion () {
+      var endpoints = this.$store.getters['saasUserManagementClientStore/getEndpoints']
+      console.log('MyLayout.vue - caculating serverInfoVersion')
+      if (typeof (endpoints[saasApiClient.getMainEndpointName()]) === 'undefined') {
+        return 'NotRead'
+      }
+      if (typeof (endpoints[saasApiClient.getMainEndpointName()].serverInfo) === 'undefined') {
+        return 'NotRead'
+      }
+      if (typeof (endpoints[saasApiClient.getMainEndpointName()].serverInfo.Server) === 'undefined') {
+        return 'NotRead'
+      }
+      if (typeof (endpoints[saasApiClient.getMainEndpointName()].serverInfo.Server.Version) === 'undefined') {
+        return 'NotRead'
+      }
+      return endpoints[saasApiClient.getMainEndpointName()].serverInfo.Server.Version
+    },
+    serverInfoVersionMatchesCodeBaseVersion () {
+      if (this.serverInfoVersion === 'NotRead') {
+        // don't display the error if we haven't read services version yet
+        return true
+      }
+      if (this.serverInfoVersion === this.codebasever) {
+        return true
+      }
+      return false
     }
   }
 }
