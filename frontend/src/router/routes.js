@@ -87,6 +87,97 @@ function redirectToURLWithExpandedCampaignParams () {
   return false
 }
 
+function actionsForLoggedInUser ({ to }) {
+  // Empty function. Good place for loading logged in users details
+  // saasLinkVisCallback uses router.history.current.path to get the current path
+  //   we need to fake it
+  // var fakerouter = {
+  //   history: {
+  //     current: {
+  //       path: to.path
+  //     }
+  //   }
+  // }
+  // stores().dispatch(
+  //   'loggedInUserInfo/getInfo',
+  //   {
+  //     router: fakerouter, // Used to caculate cur path
+  //     store: stores(),
+  //     userGuid: stores().getters['saasUserManagementClientStore/loggedInInfo'].userGuid
+  //   }
+  // )
+}
+
+function notLoggedInBeforeEnter (to, from, next) {
+  redirectionlogger('notLoggedInBeforeEnter')
+
+  var notLoggedInPath = '/' + to.params.tenantName + '/notloggedin'
+  var afterLoginPath = '/' + to.params.tenantName
+
+  var sendUserToNotLoggedInPage = function () {
+    sendUserToPage(to, next, notLoggedInPath, to.path)
+  }
+  var sendUserToDefaultAfterLoginPage = function () {
+    sendUserToPage(to, next, afterLoginPath)
+  }
+
+  var callback = {
+    ok: function (response) {
+      // At this point the retervial token and cookie has been read to see if user is logged in
+
+      // console.log('sendUserToNotLoggedInPage callback OK')
+      // Rather than check if user is logged in check they have the role hasaccount
+      var hasAccount = stores().getters['saasUserManagementClientStore/hasRole']('hasaccount')
+      if (hasAccount) {
+        if (to.path === notLoggedInPath) {
+          console.log('about to sendUserToDefaultAfterLoginPage', to.path)
+          sendUserToDefaultAfterLoginPage()
+          return
+        } else {
+          actionsForLoggedInUser({ to })
+          next()
+          return
+        }
+      }
+
+      // At this point we know the user has no login credentials
+      if (allowNotLoggedInForPath(to.params.tenantName, to.path)) {
+        redirectionlogger('notLoggedInBeforeEnter - page is allowed for not logged in user')
+        next()
+        return
+      }
+      sendUserToNotLoggedInPage()
+      // console.log('sendUserToNotLoggedInPage callback OK END')
+    },
+    error: function (response) {
+      console.log('ERROR router.js fds43 ERR', response)
+      sendUserToNotLoggedInPage()
+    }
+  }
+
+  if (typeof (to.query.jwtretervialtoken) === 'undefined') {
+    // console.log('Checking for logon cookie')
+    stores().dispatch(
+      'saasUserManagementClientStore/checkForPersistedCookieLogon',
+      {
+        callback: callback
+      }
+    )
+  } else {
+    redirectionlogger('Detected return from login')
+    // gtm not deployed yet
+    // gtm.logEvent('login', 'LoginComplete', 'Done', 0)
+    stores().dispatch(
+      'saasUserManagementClientStore/processRecievedJWTretervialtoken',
+      {
+        jwtretervialtoken: to.query.jwtretervialtoken,
+        callback: callback,
+        curpath: to.path
+      }
+    )
+  }
+}
+
 function globalBeforeEnter (to, from, next, callSrc) {
   redirectionlogger('globalBeforeEnter topath=' + to.path + ' source of globalBeforeEnter=' + callSrc)
 
@@ -95,13 +186,13 @@ function globalBeforeEnter (to, from, next, callSrc) {
   if (redirectToURLWithExpandedCampaignParams()) return
 
   saasApiClient.registerEndpoints(stores(), prodDomain, x.runtype)
-  //
-  // if (stores().getters['saasUserManagementClientStore/isLoggedIn']) {
-  //   actionsForLoggedInUser({ to })
-  //   next()
-  // } else {
-  //   notLoggedInBeforeEnter(to, from, next)
-  // }
+
+  if (stores().getters['saasUserManagementClientStore/isLoggedIn']) {
+    actionsForLoggedInUser({ to })
+    next()
+  } else {
+    notLoggedInBeforeEnter(to, from, next)
+  }
 }
 
 function getGlobalBeforeEnterFn (params, callSrc) {
