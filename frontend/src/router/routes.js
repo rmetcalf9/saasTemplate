@@ -240,7 +240,8 @@ const routes = [
     component: () => import('layouts/MainLayout.vue'),
     beforeEnter: getGlobalBeforeEnterFn('main'),
     children: [
-      { path: '', name: 'Index', component: () => import('pages/Index.vue'), beforeEnter: getGlobalBeforeEnterFn('Index') }
+      { path: '', name: 'Index', component: () => import('pages/Index.vue'), beforeEnter: getGlobalBeforeEnterFn('Index') },
+      { path: 'debug', name: 'Debug', component: () => import('pages/Debug.vue'), beforeEnter: getGlobalBeforeEnterFn('debug') }
     ]
   },
 

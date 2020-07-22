@@ -12,7 +12,7 @@
         />
 
         <q-toolbar-title>
-          Quasar App
+          <div @click="clicktoolbartitle">Quasar App</div>
         </q-toolbar-title>
         <div v-if="serverInfoVersionMatchesCodeBaseVersion">Version {{ serverInfoVersion }}</div>
         <div v-if="!serverInfoVersionMatchesCodeBaseVersion">Version {{ serverInfoVersion }}
@@ -73,7 +73,31 @@ export default {
     return {
       leftDrawerOpen: false,
       codebasever: rjmversion.codebasever,
+      toolbartitlelastclick: Date.now(),
+      toolbartitleclickcount: 0,
       essentialLinks: linksData
+    }
+  },
+  methods: {
+    clicktoolbartitle () {
+      // console.log('Start of clicktoolbartitle')
+      // Reset counter if last click was more than 2 seconds ago
+      var curTime = Date.now()
+      if ((curTime - this.toolbartitlelastclick) > 2000) {
+        this.toolbartitlelastclick = curTime
+        this.toolbartitleclickcount = 0
+        return
+      }
+
+      // Not increment following rules
+      this.toolbartitleclickcount = this.toolbartitleclickcount + 1
+      this.toolbartitlelastclick = curTime
+
+      if (this.toolbartitleclickcount > 7) {
+        this.toolbartitleclickcount = 0
+        this.$router.replace('/' + this.$route.params.tenantName + '/debug')
+      }
+      // console.log('End of clicktoolbartitle')
     }
   },
   computed: {

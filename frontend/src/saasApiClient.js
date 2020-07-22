@@ -1,7 +1,7 @@
 // This file is for calling my backend services
 import rjmversion from './rjmversion.js'
 
-var endpointName = 'saas_challengeapp'
+var endpointName = 'challengeapp'
 function getMainEndpointName () {
   return endpointName
 }
