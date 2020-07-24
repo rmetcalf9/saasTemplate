@@ -52,6 +52,12 @@ def generateJWTTokenFromUserDict(userDict, JWTSecretFn):
     'DummyAuthKey'
   )['JWTToken']
 
+def makeJWTTokenWithMasterTenantRoles(roles, UserID, JWTSecretFn):
+  userDict = {
+    "UserID": UserID,
+    "TenantRoles": { constants.saasUserManTenant: roles}
+  }
+  return generateJWTTokenFromUserDict(userDict, JWTSecretFn)
 
 class SessionMock():
   userID = None
