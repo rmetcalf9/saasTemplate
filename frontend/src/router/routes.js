@@ -115,7 +115,8 @@ function notLoggedInBeforeEnter (to, from, next) {
   var afterLoginPath = '/' + to.params.tenantName
 
   var sendUserToNotLoggedInPage = function () {
-    sendUserToPage(to, next, notLoggedInPath, to.path)
+    // sendUserToPage(to, next, notLoggedInPath, to.path)
+    sendUserToLogin(to) // Send user direct to login
   }
   var sendUserToDefaultAfterLoginPage = function () {
     sendUserToPage(to, next, afterLoginPath)
@@ -218,6 +219,11 @@ function sendUserToPage (to, next, targetPage, requestedPage) {
   next({
     path: targetPage
   })
+}
+
+function sendUserToLogin (to) {
+  var returnAddress = window.location.protocol + '//' + window.location.host + window.location.pathname + '#' + to.path
+  window.location.href = stores().getters['saasUserManagementClientStore/getLoginUIURLFn'](undefined, '/', returnAddress)
 }
 
 function redirectToDefaultTenant (to, from, next) {
