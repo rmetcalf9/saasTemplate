@@ -24,6 +24,9 @@ export function COMPLETEREFRESHSUCESSFULLY (state, result) {
   // console.log('COMPLETEREFRESHSUCESSFULLY', result.data.refresh.token)
   state.pendingRefreshToken = result.data.refresh.token
   state.loginProcessState = 2
+
+  // Save the loginTenantName with the cookie
+  result.data.loginTenantName = state.loginTenantName
   Cookies.set('saasUserManagementClientStoreCredentials', result.data, {
     secure: !window.location.href.includes('localhost'), // otherwise cookie not set on dev machines
     expires: 90 // expire in 90 days
@@ -40,6 +43,14 @@ export function RETRIEVELOGINFROMCOOKIE (state) {
   var cookieData = Cookies.get('saasUserManagementClientStoreCredentials')
   if (typeof (cookieData) === 'undefined') {
     return // blanked cookie so do nothing (cookies are blanked when refresh fails)
+  }
+  if (typeof (cookieData.loginTenantName) === 'undefined') {
+    // require cookie to have the loginTenantName
+    return
+  }
+  if (cookieData.loginTenantName !== state.loginTenantName) {
+    // do not accept a cookie without a loginTenantName that matches this one
+    return
   }
   state.loginProcessState = 2
   state.loggedInInfo = cookieData
